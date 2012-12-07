@@ -124,7 +124,7 @@ public class JsonObject extends LinkedHashMap<String, JsonElement> implements Js
 	 */
 	public String getString(final String...labels) {
 		JsonElement jsonElement = get(labels);
-		if(jsonElement == null) {
+		if(jsonElement == null || JsonType.nullValue == jsonElement.type()) {
 			return null;
 		} else {
 			return jsonElement.asPrimitive().asString();
@@ -138,7 +138,7 @@ public class JsonObject extends LinkedHashMap<String, JsonElement> implements Js
 	 */
 	public Boolean getBoolean(final String...labels) {
 		JsonElement jsonElement = get(labels);
-		if(jsonElement == null) {
+		if(jsonElement == null || JsonType.nullValue == jsonElement.type()) {
 			return null;
 		} else {
 			return jsonElement.asPrimitive().asBoolean();
@@ -152,7 +152,7 @@ public class JsonObject extends LinkedHashMap<String, JsonElement> implements Js
 	 */
 	public Integer getInt(final String...labels) {
 		JsonElement jsonElement = get(labels);
-		if(jsonElement == null) {
+		if(jsonElement == null || JsonType.nullValue == jsonElement.type()) {
 			return null;
 		} else {
 			return jsonElement.asPrimitive().asInt();
@@ -166,7 +166,7 @@ public class JsonObject extends LinkedHashMap<String, JsonElement> implements Js
 	 */
 	public Double getDouble(final String...labels) {
 		JsonElement jsonElement = get(labels);
-		if(jsonElement == null) {
+		if(jsonElement == null || JsonType.nullValue == jsonElement.type()) {
 			return null;
 		} else {
 			return jsonElement.asPrimitive().asDouble();
@@ -180,7 +180,7 @@ public class JsonObject extends LinkedHashMap<String, JsonElement> implements Js
 	 */
 	public JsonObject getObject(final String...labels) {
 		JsonElement jsonElement = get(labels);
-		if(jsonElement == null) {
+		if(jsonElement == null || JsonType.nullValue == jsonElement.type()) {
 			return null;
 		} else {
 			return jsonElement.asObject();
@@ -194,7 +194,7 @@ public class JsonObject extends LinkedHashMap<String, JsonElement> implements Js
 	 */
 	public JsonArray getArray(final String...labels) {
 		JsonElement jsonElement = get(labels);
-		if(jsonElement == null) {
+		if(jsonElement == null || JsonType.nullValue == jsonElement.type()) {
 			return null;
 		} else {
 			return jsonElement.asArray();
