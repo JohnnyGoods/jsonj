@@ -23,10 +23,12 @@ package com.github.jsonj;
 
 import static com.github.jsonj.tools.JsonBuilder.primitive;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 import com.github.jsonj.exceptions.JsonTypeMismatchException;
+import com.github.jsonj.tools.JsonSerializer;
 
 /**
  * Representation of json arrays that extends LinkedList.
@@ -55,11 +57,25 @@ public class JsonArray extends LinkedList<JsonElement> implements JsonElement {
 	/**
 	 * Variant of add that adds multiple JsonElements.
 	 * @param elements
-	 */	public void add(final JsonElement...elements) {
+	 */
+	public void add(final JsonElement...elements) {
 		for (JsonElement element : elements) {
 			add(primitive(element));
 		}
 	}
+
+	@Override
+	public boolean addAll(@SuppressWarnings("rawtypes") Collection c) {
+        for (Object element : c) {
+            if(element instanceof JsonElement) {
+                add((JsonElement)element);
+            } else {
+                add(primitive(element));
+            }
+        }
+        return c.size() != 0;
+	}
+
 
 	/**
 	 * Convenient method providing a few alternate ways of extracting elements
@@ -74,7 +90,7 @@ public class JsonArray extends LinkedList<JsonElement> implements JsonElement {
 		int i = 0;
 		try{
 			for (JsonElement e : this) {
-				if(e.isPrimitive() && e.toString().equals(label)) {
+				if(e.isPrimitive() && e.asPrimitive().asString().equals(label)) {
 					return e;
 				} else if((e.isObject() || e.isArray())  && Integer.valueOf(label).equals(i)) {
 					return e;
@@ -117,6 +133,11 @@ public class JsonArray extends LinkedList<JsonElement> implements JsonElement {
 	public JsonPrimitive asPrimitive() {
 		throw new JsonTypeMismatchException("not a primitive");
 	}
+	
+   @Override
+    public String asString() {
+        throw new JsonTypeMismatchException("not a primitive");
+    }
 
 	@Override
 	public boolean isObject() {
@@ -161,12 +182,12 @@ public class JsonArray extends LinkedList<JsonElement> implements JsonElement {
 		}
 		return code;
 	}
-	
+
 	@Override
 	public Object clone() {
 		return deepClone();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public JsonArray deepClone() {
@@ -176,7 +197,7 @@ public class JsonArray extends LinkedList<JsonElement> implements JsonElement {
 		}
 		return array;
 	}
-	
+
 	@Override
 	public boolean isEmpty() {
 		boolean empty = true;
@@ -190,17 +211,22 @@ public class JsonArray extends LinkedList<JsonElement> implements JsonElement {
 		}
 		return empty;
 	}
-	
+
 	@Override
 	public void removeEmpty() {
 		Iterator<JsonElement> iterator = iterator();
 		while (iterator.hasNext()) {
-			JsonElement jsonElement = (JsonElement) iterator.next();
+			JsonElement jsonElement = iterator.next();
 			if(jsonElement.isEmpty()) {
 				iterator.remove();
 			} else {
 				jsonElement.removeEmpty();
-			}			
+			}
 		}
+	}
+	
+	@Override
+	public String toString() {
+	    return JsonSerializer.serialize(this,false);
 	}
 }

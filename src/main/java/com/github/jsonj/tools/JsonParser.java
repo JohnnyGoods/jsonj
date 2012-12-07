@@ -24,7 +24,6 @@ package com.github.jsonj.tools;
 import java.io.IOException;
 import java.io.Reader;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.json.simple.parser.ContentHandler;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -135,11 +134,7 @@ public class JsonParser {
 		public boolean primitive(final Object object) throws ParseException,
 		IOException {
 			JsonPrimitive primitive;
-			if(object instanceof String) {
-				primitive = new JsonPrimitive(StringEscapeUtils.unescapeJavaScript((String)object));
-			} else {
-				primitive = new JsonPrimitive(object);
-			}
+			primitive = new JsonPrimitive(object);
 			if (isObject) {
 				stack.add(primitive);
 			} else {
@@ -162,7 +157,7 @@ public class JsonParser {
 				JsonElement last = stack.peekLast();
 				if(last.isObject()) {
 					JsonObject container = last.asObject();
-					String key = e.toString();
+					String key = e.asPrimitive().asString();
 					// use intern under the assumption that the set of unique keys is small; should reduce memory usage and speed up things a bit
 					container.put(key.intern(), value);
 				} else if(last.isArray()) {

@@ -24,6 +24,7 @@ package com.github.jsonj;
 import org.apache.commons.lang.StringUtils;
 
 import com.github.jsonj.exceptions.JsonTypeMismatchException;
+import com.github.jsonj.tools.JsonSerializer;
 
 /**
  * Representation of json primitives.
@@ -39,9 +40,9 @@ public class JsonPrimitive implements JsonElement {
 
 	private JsonPrimitive(Object value, JsonType type) {
 		this.value = value;
-		this.type = type;		
+		this.type = type;
 	}
-	
+
 	public JsonPrimitive(final String s) {
 		if(s==null) {
 			type = JsonType.nullValue;
@@ -102,7 +103,7 @@ public class JsonPrimitive implements JsonElement {
 		if(type == JsonType.number) {
 			return ((Number)value).intValue();
 		} else {
-			throw new JsonTypeMismatchException("not a number");
+			throw new JsonTypeMismatchException("not a number '"+value+"'");
 		}
 	}
 
@@ -110,7 +111,7 @@ public class JsonPrimitive implements JsonElement {
 		if(type == JsonType.number) {
 			return ((Number)value).doubleValue();
 		} else {
-			throw new JsonTypeMismatchException("not a number");
+			throw new JsonTypeMismatchException("not a number '"+value+"'");
 		}
 	}
 
@@ -118,7 +119,7 @@ public class JsonPrimitive implements JsonElement {
 		if(type == JsonType.bool) {
 			return ((Boolean)value).booleanValue();
 		} else{
-			throw new JsonTypeMismatchException("not a boolean");
+			throw new JsonTypeMismatchException("not a boolean '"+value+"'");
 		}
 	}
 
@@ -147,14 +148,30 @@ public class JsonPrimitive implements JsonElement {
 	public JsonPrimitive asPrimitive() {
 		return this;
 	}
-
-	@Override
-	public String toString() {
-		if(value != null)
-			return value.toString();
-		else
-			return "null";
+	
+	/**
+	 * @return the raw value as an Object.
+	 */
+	public Object value() {
+	    return value;
 	}
+
+    @Override
+    public String toString() {
+        switch (type) {
+        case string:
+            String raw = value.toString();
+            return '"' + JsonSerializer.jsonEscape(raw) + '"';
+        case bool:
+            return value.toString();
+        case number:
+            return value.toString();
+        case nullValue:
+            return "null";
+        default:
+            throw new IllegalArgumentException("value has to be a primitive");
+        }
+    }
 
 	@Override
 	public boolean isObject() {
@@ -198,12 +215,12 @@ public class JsonPrimitive implements JsonElement {
 		}
 		return hashCode;
 	}
-	
+
 	@Override
 	public Object clone() {
 		return deepClone();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public JsonPrimitive deepClone() {

@@ -31,8 +31,6 @@ import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.apache.commons.lang.StringEscapeUtils;
-
 import com.github.jsonj.JsonElement;
 import com.github.jsonj.JsonType;
 
@@ -40,7 +38,7 @@ import com.github.jsonj.JsonType;
  * Utility class to serialize Json.
  */
 public class JsonSerializer {
-	
+
 	private JsonSerializer() {
 		// utility class, don't instantiate
 	}
@@ -95,7 +93,10 @@ public class JsonSerializer {
 	}
 
 	private static void write(final BufferedWriter bw, final JsonElement json, final boolean pretty, final int indent) throws IOException {
-		JsonType type = json.type();
+		if(json==null) {
+            return;
+        }
+	    JsonType type = json.type();
 		switch (type) {
 		case object:
 			bw.write('{');
@@ -105,13 +106,15 @@ public class JsonSerializer {
 				Entry<String, JsonElement> entry = iterator.next();
 				String key = entry.getKey();
 				JsonElement value = entry.getValue();
-				bw.write('"');
-				bw.write(key);
-				bw.write("\":");
-				write(bw,value,pretty,indent+1);
-				if(iterator.hasNext()) {
-					bw.write(',');
-					newline(bw, indent+1, pretty);
+				if(value != null) {
+    				bw.write('"');
+    				bw.write(jsonEscape(key));
+    				bw.write("\":");
+    				write(bw,value,pretty,indent+1);
+    				if(iterator.hasNext()) {
+    					bw.write(',');
+    					newline(bw, indent+1, pretty);
+    				}
 				}
 			}
 			newline(bw, indent, pretty);
@@ -133,20 +136,16 @@ public class JsonSerializer {
 			bw.write(']');
 			break;
 		case string:
-			bw.write('"');
-
-			String raw = json.toString();
-			bw.write(StringEscapeUtils.escapeJavaScript(raw));
-			bw.write('"');
+			bw.write(json.toString());
 			break;
 		case bool:
-			bw.write(json.toString());
+            bw.write(json.toString());
 			break;
 		case number:
-			bw.write(json.toString());
+            bw.write(json.toString());
 			break;
 		case nullValue:
-			bw.write("null");
+            bw.write(json.toString());
 			break;
 
 		default:
@@ -154,7 +153,69 @@ public class JsonSerializer {
 		}
 	}
 
-	private static void newline(final BufferedWriter bw, final int n, final boolean pretty) throws IOException {
+	public static String jsonEscape(String raw) {
+	    StringBuilder buf=new StringBuilder(raw.length());
+	    for(char c: raw.toCharArray()) {
+	        if('\n' == c) {
+	            buf.append("\\n");
+	        } else if('"' == c) {
+	            buf.append("\\\"");
+	        } else if('\\' == c) {
+                buf.append("\\\\");
+            } else if('\t' == c) {
+                buf.append("\\t");
+            } else if('\r' == c) {
+                buf.append("\\r");
+            } else {
+	            buf.append(c);
+	        }
+	    }
+        return buf.toString();
+    }
+	
+	public static String jsonUnescape(String escaped) {
+        StringBuilder buf=new StringBuilder(escaped.length());
+        char[] chars = escaped.toCharArray();
+        if(chars.length >= 2) {
+            int i=1;
+            while(i<chars.length) {
+                if(chars[i-1] == '\\') {
+                    if(chars[i]=='t') {
+                        buf.append('\t');
+                        i+=2;
+                    } else if(chars[i]=='n') {
+                        buf.append('\n');
+                        i+=2;
+                    } else if(chars[i]=='r') {
+                        buf.append('\r');
+                        i+=2;
+                    } else if(chars[i] == '"') {
+                        buf.append('"');
+                        i+=2;
+                    } else if(chars[i] == '\\') {
+                        buf.append('\\');
+                        i+=2;
+                    } else {
+                        buf.append(chars[i-1]);
+                        buf.append(chars[i]);
+                        i+=2;
+                    }
+                } else {
+                    buf.append(chars[i-1]);
+                    i++;                    
+                }
+            } 
+            if(i==chars.length) { 
+                // make sure to add the last character
+                buf.append(chars[i-1]);
+            }
+            return buf.toString();
+        } else {
+            return escaped;
+        }
+	}
+
+    private static void newline(final BufferedWriter bw, final int n, final boolean pretty) throws IOException {
 		if(pretty) {
 			bw.write('\n');
 			for(int i=0;i<n;i++) {

@@ -41,10 +41,22 @@ import com.github.jsonj.tools.JsonSerializer;
  */
 public class JsonObject extends LinkedHashMap<String, JsonElement> implements JsonElement {
 	private static final long serialVersionUID = 2183487305816320684L;
+	
+	private String idField=null;
 
 	@Override
 	public JsonType type() {
 		return JsonType.object;
+	}
+	
+	/**
+	 * By default, the hash code is calculated recursively, which can be rather expensive. Calling this method allows you
+	 * to specify a special field that will be used for calculating this object's hashcode. In case the field value is null
+	 * it will fall back to recursive behavior.
+	 * @param fieldName name of the field value that should be used for calculating the hash code
+	 */
+	public void useIdHashCodeStrategy(String fieldName) {
+	    idField = fieldName.intern();
 	}
 
 	@Override
@@ -61,6 +73,11 @@ public class JsonObject extends LinkedHashMap<String, JsonElement> implements Js
 	public JsonPrimitive asPrimitive() {
 		throw new JsonTypeMismatchException("not a primitive");
 	}
+
+	@Override
+    public String asString() {
+        throw new JsonTypeMismatchException("not a primitive");
+    }
 
 	@Override
 	public String toString() {
@@ -92,11 +109,41 @@ public class JsonObject extends LinkedHashMap<String, JsonElement> implements Js
 	public boolean isPrimitive() {
 		return false;
 	}
+	
+    /**
+     * Allows you to get the nth entry in the JsonObject. Please note that this method iterates over all the entries
+     * until it finds the nth, so getting the last element is probably going to be somewhat expensive, depending on the
+     * size of the collection. Also note that the entries in JsonObject are ordered by the order of insertion (it is a
+     * LinkedHashMap).
+     * 
+     * @param index
+     * @return the nth entry in the JsonObject.
+     */
+    public Entry<String, JsonElement> get(int index) {
+        if (index >= size()) {
+            throw new IllegalArgumentException("index out of range");
+        } else {
+            int i = 0;
+            for (Entry<String, JsonElement> e : entrySet()) {
+                if (i++ == index) {
+                    return e;
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * @return the first entry in the object.
+     */
+    public Entry<String, JsonElement> first() {
+        return get(0);
+    }
 
 	/**
 	 * Get a json element at a particular path in an object structure.
 	 * @param labels list of field names that describe the location to a particular json node.
-	 * @return a json element at a particular path in an object.
+	 * @return a json element at a particular path in an object or null if it can't be found.
 	 */
 	public JsonElement get(final String...labels) {
 		JsonElement e = this;
@@ -286,6 +333,12 @@ public class JsonObject extends LinkedHashMap<String, JsonElement> implements Js
 
 	@Override
 	public int hashCode() {
+	    if(idField != null) {
+	        JsonElement jsonElement = get(idField);
+	        if(jsonElement != null) {
+                return jsonElement.hashCode();
+            }
+	    }
 		int hashCode=23;
 		Set<Entry<String, JsonElement>> entrySet = entrySet();
 		for (Entry<String, JsonElement> entry : entrySet) {
